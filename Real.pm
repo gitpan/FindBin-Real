@@ -7,6 +7,9 @@
 # under the same terms as Perl itself.
 
 # History:
+#  1.02  2003/08/10 Fixed bug in Makefile.PM (Findbin -> FindBin)
+#                   ^M symbols are removed from sources
+#                   (Thanks to Mike Castle)
 #  1.01  2003/08/08 Added some tests and README
 #  1.00  2003/08/06 Initial revision
 
@@ -102,7 +105,7 @@ our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir);
 our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir)]);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.01";
+our $VERSION = "1.02";
 
 sub init {
   my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir);
