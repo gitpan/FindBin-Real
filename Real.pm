@@ -1,12 +1,14 @@
 # FindBin/Real.pm
 #
 # Copyright (c) 1995 Graham Barr & Nick Ing-Simmons. All rights reserved.
-# Copyright (c) 2003 Serguei Trouchelle. All rights reserved.
+# Copyright (c) 2003, 2004 Serguei Trouchelle. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 # History:
+#  1.03  2004/02/15 Added BinDepth() function
+#                   (Suggested by Tielman de Villiers)
 #  1.02  2003/08/10 Fixed bug in Makefile.PM (Findbin -> FindBin)
 #                   ^M symbols are removed from sources
 #                   (Thanks to Mike Castle)
@@ -26,6 +28,13 @@ FindBin::Real - Locate directory of original perl script
 
  use FindBin::Real qw(Bin);
  use lib Bin() . '/../lib';
+
+ or
+
+ # Run from /usr/bin/www/some/path/ or /usr/bin/www/some/other/path or any
+ use FindBin::Real qw(BinDepth);
+ use lib BinDepth(3) . '/lib';
+ # And always got /usr/bin/www/lib !
 
 =head1 DESCRIPTION
 
@@ -47,6 +56,7 @@ directory.
  Script      - basename of script from which perl was invoked
  RealBin     - Bin() with all links resolved
  RealScript  - Script() with all links resolved
+ BinDepth(n) - path to n-level parent directory
 
 =head1 KNOWN ISSUES
 
@@ -101,11 +111,11 @@ use File::Spec;
 use strict;
 use warnings;
 
-our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir);
-our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir)]);
+our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir BinDepth);
+our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir BinDepth)]);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.02";
+our $VERSION = "1.03";
 
 sub init {
   my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir);
@@ -221,5 +231,15 @@ sub RealDir {
   return $RealDir;
 }
 
+sub BinDepth($) {
+  my $depth = shift;
+  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
+  return $Bin unless $depth =~ /\d+/;
+  return $1 . $2   if $Bin =~ m!(.*?)((/[^/]+?){$depth})/!;
+  return $Bin;
+}
+
+
 1; # Keep require happy
 
+                    	

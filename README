@@ -28,6 +28,7 @@ EXPORTABLE FUNCTIONS
      Script      - basename of script from which perl was invoked
      RealBin     - Bin() with all links resolved
      RealScript  - Script() with all links resolved
+     BinDepth(n) - path to n-level parent directory
 
 KNOWN ISSUES
     If there are two modules using "FindBin::Real" from different
