@@ -1,12 +1,16 @@
 # FindBin/Real.pm
 #
 # Copyright (c) 1995 Graham Barr & Nick Ing-Simmons. All rights reserved.
-# Copyright (c) 2003, 2004 Serguei Trouchelle. All rights reserved.
+# Copyright (c) 2003-2005 Serguei Trouchelle. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 # History:
+#  1.04  2005/02/07 Refactured version. About +50% in performance.
+#                   Version is corrected to $FindBin::Real::VERSION.
+#                   Fixed problem with Dir/RealDir
+#                   Some tests added.
 #  1.03  2004/02/15 Added BinDepth() function
 #                   (Suggested by Tielman de Villiers)
 #  1.02  2003/08/10 Fixed bug in Makefile.PM (Findbin -> FindBin)
@@ -92,7 +96,7 @@ Nick Ing-Simmons E<lt>F<nik@tiuk.ti.com>E<gt>
 =head1 COPYRIGHT
 
 Copyright (c) 1995 Graham Barr & Nick Ing-Simmons. All rights reserved.
-Copyright (c) 2003 Serguei Trouchelle. All rights reserved.
+Copyright (c) 2003-2005 Serguei Trouchelle. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -115,130 +119,122 @@ our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir BinDepth);
 our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir BinDepth)]);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.03";
+$FindBin::Real::VERSION = "1.04";
 
-sub init {
+my $keyBin        = 1;
+my $keyScript     = 2;
+my $keyRealBin    = 3;
+my $keyRealScript = 4;
+
+sub mastermind {
+  my $meth = shift || die 'Invalid call to mastermind';
+
+  if ($0 eq '-e' || $0 eq '-') {
+    return getcwd() if $meth == $keyBin || $meth == $keyRealBin;
+    return $0 if $meth == $keyScript || $meth == $keyRealScript;
+  }
+  if ($^O eq 'VMS') {
+#   ($Bin,$Script) = VMS::Filespec::rmsexpand($0) =~ /(.*\])(.*)/s;
+    return VMS::Filespec::rmsexpand($0) =~ /(.*\])/s if $meth == $keyBin || $meth == $keyRealBin;
+    return VMS::Filespec::rmsexpand($0) =~ /.*\](.*)/s if $meth == $keyScript || $meth == $keyRealScript;
+  }
+
   my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir);
+  my $script = $0;
 
- *Dir = \$Bin;
- *RealDir = \$RealBin;
-
- if($0 eq '-e' || $0 eq '-')
-  {
-   # perl invoked with -e or script is on C<STDIN>
-
-   $Script = $RealScript = $0;
-   $Bin    = $RealBin    = getcwd();
-  }
- else
-  {
-   my $script = $0;
-
-   if ($^O eq 'VMS')
-    {
-     ($Bin,$Script) = VMS::Filespec::rmsexpand($0) =~ /(.*\])(.*)/s;
-     ($RealBin,$RealScript) = ($Bin,$Script);
-    }
-   else
-    {
-     my $dosish = ($^O eq 'MSWin32' or $^O eq 'os2');
-     unless(($script =~ m#/# || ($dosish && $script =~ m#\\#))
-            && -f $script)
+  my $dosish = ($^O eq 'MSWin32' or $^O eq 'os2');
+  unless(($script =~ m#/# || ($dosish && $script =~ m#\\#))
+         && -f $script)
+   {
+    my $dir;
+    foreach $dir (File::Spec->path)
+     {
+     my $scr = File::Spec->catfile($dir, $script);
+     if(-r $scr && (!$dosish || -x _))
       {
-       my $dir;
-       foreach $dir (File::Spec->path)
-	{
-        my $scr = File::Spec->catfile($dir, $script);
-	if(-r $scr && (!$dosish || -x _))
-         {
-          $script = $scr;
+       $script = $scr;
 
-	  if (-f $0)
-           {
-	    # $script has been found via PATH but perl could have
-	    # been invoked as 'perl file'. Do a dumb check to see
-	    # if $script is a perl program, if not then $script = $0
-            #
-            # well we actually only check that it is an ASCII file
-            # we know its executable so it is probably a script
-            # of some sort.
+       if (-f $0)
+        {
+         # $script has been found via PATH but perl could have
+         # been invoked as 'perl file'. Do a dumb check to see
+         # if $script is a perl program, if not then $script = $0
+         #
+         # well we actually only check that it is an ASCII file
+         # we know its executable so it is probably a script
+         # of some sort.
 
-            $script = $0 unless(-T $script);
-           }
-          last;
-         }
-       }
-     }
-
-     croak("Cannot find current script '$0'") unless(-f $script);
-
-     # Ensure $script contains the complete path incase we C<chdir>
-
-     $script = File::Spec->catfile(getcwd(), $script)
-       unless File::Spec->file_name_is_absolute($script);
-
-     ($Script,$Bin) = fileparse($script);
-
-     # Resolve $script if it is a link
-     while(1)
-      {
-       my $linktext = readlink($script);
-
-       ($RealScript,$RealBin) = fileparse($script);
-       last unless defined $linktext;
-
-       $script = (File::Spec->file_name_is_absolute($linktext))
-                  ? $linktext
-                  : File::Spec->catfile($RealBin, $linktext);
+         $script = $0 unless(-T $script);
+        }
+       last;
       }
-
-     # Get absolute paths to directories
-     $Bin     = abs_path($Bin)     if($Bin);
-     $RealBin = abs_path($RealBin) if($RealBin);
     }
   }
-  return ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir);
+
+  croak("Cannot find current script '$0'") unless(-f $script);
+
+  # Ensure $script contains the complete path incase we C<chdir>
+
+  $script = File::Spec->catfile(getcwd(), $script)
+    unless File::Spec->file_name_is_absolute($script);
+
+  if ($meth == $keyBin or $meth == $keyScript) {
+    ($Script,$Bin) = fileparse($script);
+  } else {
+    # RealBin/RealScript:
+    # Resolve $script if it is a link
+    while(1) {
+      my $linktext = readlink($script);
+
+      ($RealScript,$RealBin) = fileparse($script);
+      last unless defined $linktext;
+
+      $script = (File::Spec->file_name_is_absolute($linktext))
+                 ? $linktext
+                 : File::Spec->catfile($RealBin, $linktext);
+    }
+  }
+  # Get absolute paths to directories
+  $Bin     = abs_path($Bin)     if $Bin;
+  $RealBin = abs_path($RealBin) if $RealBin;
+ 
+  return $Bin if $meth == $keyBin;
+  return $Script if $meth == $keyScript;
+  return $RealBin if $meth == $keyRealBin;
+  return $RealScript if $meth == $keyRealScript;
 }
 
-
 sub Bin {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $Bin;
+  return mastermind($keyBin);
 }
 
 sub Script {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $Script;
+  return mastermind($keyScript);
 }
 
 sub RealBin {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $RealBin;
+  return mastermind($keyRealBin);
 }
 
 sub RealScript {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $RealScript;
+  return mastermind($keyRealScript);
 }
 
 sub Dir {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $Dir;
+  return mastermind($keyBin);
 }
 
 sub RealDir {
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
-  return $RealDir;
+  return mastermind($keyRealBin);
 }
 
 sub BinDepth($) {
   my $depth = shift;
-  my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir) = init();
+  my $Bin = Bin();
   return $Bin unless $depth =~ /\d+/;
   return $1 . $2   if $Bin =~ m!(.*?)((/[^/]+?){$depth})/!;
   return $Bin;
 }
-
 
 1; # Keep require happy
 

@@ -2,12 +2,12 @@
 
 use strict;
 use Test;
-use FindBin qw/$RealBin/;
+use FindBin qw/$RealDir/;
 
 BEGIN { plan tests => 1 }
 
 use FindBin::Real;
 
-ok($RealBin, FindBin::Real::RealBin());
+ok($RealDir, FindBin::Real::RealDir());
 
 exit;

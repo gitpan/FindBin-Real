@@ -3,5 +3,11 @@ Makefile.PL
 t/t1.t
 t/t2.t
 t/t3.t
+t/t4.t
+t/t5.t
+t/t6.t
+t/t7.t
+t/t8.t
 README
 MANIFEST
+META.yml                                 Module meta-data (added by MakeMaker)
