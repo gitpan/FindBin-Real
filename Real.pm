@@ -6,6 +6,10 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
+# History:
+#  1.01  2003/08/08 Added some tests and README
+#  1.00  2003/08/06 Initial revision
+
 =head1 NAME
 
 FindBin::Real - Locate directory of original perl script 
@@ -98,7 +102,7 @@ our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir);
 our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir)]);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.0";
+our $VERSION = "1.01";
 
 sub init {
   my ($Bin, $Script, $RealBin, $RealScript, $Dir, $RealDir);
