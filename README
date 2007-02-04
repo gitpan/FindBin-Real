@@ -10,6 +10,13 @@ SYNOPSIS
      use FindBin::Real qw(Bin);
      use lib Bin() . '/../lib';
 
+     or
+
+     # Run from /usr/bin/www/some/path/ or /usr/bin/www/some/other/path or any
+     use FindBin::Real qw(BinDepth);
+     use lib BinDepth(3) . '/lib';
+     # And always got /usr/bin/www/lib !
+
 DESCRIPTION
     Locates the full path to the script bin directory to allow the use of
     paths relative to the bin directory.
@@ -24,11 +31,26 @@ DESCRIPTION
     the current directory.
 
 EXPORTABLE FUNCTIONS
-     Bin         - path to bin directory from where script was invoked
-     Script      - basename of script from which perl was invoked
-     RealBin     - Bin() with all links resolved
-     RealScript  - Script() with all links resolved
-     BinDepth(n) - path to n-level parent directory
+  Bin
+    - path to bin directory from where script was invoked
+
+  Script
+    - basename of script from which perl was invoked
+
+  RealBin
+    - Bin() with all links resolved
+
+  RealScript
+    - Script() with all links resolved
+
+  BinDepth(n)
+    - path to n-level parent directory
+
+  Dir()
+    - the same as Bin()
+
+  RealDir()
+    - the same as RealBin()
 
 KNOWN ISSUES
     If there are two modules using "FindBin::Real" from different

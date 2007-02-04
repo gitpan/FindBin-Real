@@ -7,6 +7,7 @@
 # under the same terms as Perl itself.
 
 # History:
+#  1.05  2007/02/04 Quality update (Test::Pod, Test::Pod::Coverage)
 #  1.04  2005/02/07 Refactured version. About +50% in performance.
 #                   Version is corrected to $FindBin::Real::VERSION.
 #                   Fixed problem with Dir/RealDir
@@ -56,11 +57,33 @@ directory.
 
 =head1 EXPORTABLE FUNCTIONS
 
- Bin         - path to bin directory from where script was invoked
- Script      - basename of script from which perl was invoked
- RealBin     - Bin() with all links resolved
- RealScript  - Script() with all links resolved
- BinDepth(n) - path to n-level parent directory
+=head2 Bin
+
+- path to bin directory from where script was invoked
+
+=head2 Script
+
+- basename of script from which perl was invoked
+
+=head2 RealBin
+
+- Bin() with all links resolved
+
+=head2 RealScript
+
+- Script() with all links resolved
+
+=head2 BinDepth(n)
+
+- path to n-level parent directory
+
+=head2 Dir()
+
+- the same as Bin()
+
+=head2 RealDir()
+
+- the same as RealBin()
 
 =head1 KNOWN ISSUES
 
@@ -119,13 +142,16 @@ our @EXPORT_OK = qw(Bin Script RealBin RealScript Dir RealDir BinDepth);
 our %EXPORT_TAGS = (ALL => [qw(Bin Script RealBin RealScript Dir RealDir BinDepth)]);
 our @ISA = qw(Exporter);
 
-$FindBin::Real::VERSION = "1.04";
+$FindBin::Real::VERSION = "1.05";
 
 my $keyBin        = 1;
 my $keyScript     = 2;
 my $keyRealBin    = 3;
 my $keyRealScript = 4;
 
+#
+# mastermind
+#
 sub mastermind {
   my $meth = shift || die 'Invalid call to mastermind';
 
